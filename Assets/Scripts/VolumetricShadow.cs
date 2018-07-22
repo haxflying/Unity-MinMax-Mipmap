@@ -12,6 +12,8 @@ public class VolumetricShadow : MonoBehaviour {
     private Material mat;
     private Camera cam;
     private CommandBuffer cb;
+    private RenderTextureDescriptor mipDes;
+    private RenderTexture mip;
 
 	void Start () {
         mat = new Material(zShader);
@@ -19,9 +21,25 @@ public class VolumetricShadow : MonoBehaviour {
         cb = new CommandBuffer();
         cb.name = "MZ CB";
         mainLight.AddCommandBuffer(LightEvent.BeforeScreenspaceMask, cb);
-        cb.Blit(BuiltinRenderTextureType.CurrentActive, target, mat);
+
+        mipDes = new RenderTextureDescriptor(1024, 768, RenderTextureFormat.RG16, 0);
+        mipDes.useMipMap = true;
+        mipDes.autoGenerateMips = false;
+
+        mip = new RenderTexture(mipDes);
+        mip.filterMode = FilterMode.Point;
+        mip.wrapMode = TextureWrapMode.Clamp;
+
+        cb.Blit(null, target, mat);
     }
 
+    private void GenerateMinMaxMip(CommandBuffer cb, RenderTexture mip)
+    {
+        for (int i = 0; i < 10; i++)
+        {
+
+        }
+    }
     private void OnPostRender()
     {
         

@@ -1,17 +1,11 @@
 ﻿Shader "Hidden/zShader"
 {
-    Properties
-    {
-        _MainTex ("Texture", 2D) = "white" { }
-    }
 
     CGINCLUDE
-    UNITY_DECLARE_SHADOWMAP(_ShadowMapTexture);
-    float4 _ShadowMapTexture_TexelSize;
-    #define SHADOWMAPSAMPLER_AND_TEXELSIZE_DEFINED
 
     #include "UnityCG.cginc"
     #include "UnityShadowLibrary.cginc"
+
     // Configuration
 
     // Should receiver plane bias be used? This estimates receiver slope using derivatives,
@@ -203,32 +197,12 @@
 
     inline float3 computeCameraSpacePosFromDepth(v2f i);
 
-    /**
- *  Hard shadow
- */
-    fixed4 frag_hard(v2f i) : SV_Target
-    {
-        UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+    Texture2D _ShadowMapTexture;
+    SamplerState sampler_ShadowMapTexture;
+    //SamplerComparisonState sampler_ShadowMapTexture;
+    //UNITY_DECLARE_SHADOWMAP(_ShadowMapTexture);
+    //sampler2D _ShadowMapTexture;
 
-        // required for sampling the correct slice of the shadow map render texture array
-        float3 vpos = computeCameraSpacePosFromDepth(i);
-
-        float4 wpos = mul(unity_CameraToWorld, float4(vpos, 1));
-
-        fixed4 cascadeWeights = GET_CASCADE_WEIGHTS(wpos, vpos.z);
-        float4 shadowCoord = GET_SHADOW_COORDINATES(wpos, cascadeWeights);
-
-        //1 tap hard shadow
-        fixed shadow = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, shadowCoord);
-        shadow = lerp(_LightShadowData.r, 1.0, shadow);
-
-        fixed4 res = shadow;
-        return res;
-    }
-
-    /**
- *  Soft Shadow (SM 3.0)
- */
     fixed4 frag_pcfSoft(v2f i) : SV_Target
     {
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
@@ -241,51 +215,10 @@
         float4 wpos = mul(unity_CameraToWorld, float4(vpos, 1));
         fixed4 cascadeWeights = GET_CASCADE_WEIGHTS(wpos, vpos.z);
         float4 coord = GET_SHADOW_COORDINATES(wpos, cascadeWeights);
-        //return coord;
-        float3 receiverPlaneDepthBias = 0.0;
-        #ifdef UNITY_USE_RECEIVER_PLANE_BIAS
-        // Reveiver plane depth bias: need to calculate it based on shadow coordinate
-        // as it would be in first cascade; otherwise derivatives
-        // at cascade boundaries will be all wrong. So compute
-        // it from cascade 0 UV, and scale based on which cascade we're in.
-        float3 coordCascade0 = getShadowCoord_SingleCascade(wpos);
-        float biasMultiply = dot(cascadeWeights, unity_ShadowCascadeScales);
-        receiverPlaneDepthBias = UnityGetReceiverPlaneDepthBias(coordCascade0.xyz, biasMultiply);
-        #endif
-
-        #if defined(SHADER_API_MOBILE)
-        half shadow = UnitySampleShadowmap_PCF5x5(coord, receiverPlaneDepthBias);
-        #else
-        half shadow = UnitySampleShadowmap_PCF7x7(coord, receiverPlaneDepthBias);
-        #endif
-        shadow = lerp(_LightShadowData.r, 1.0f, shadow);
-        // Blend between shadow cascades if enabled
-
-        //
-        // Not working yet with split spheres, and no need when 1 cascade
-        #if UNITY_USE_CASCADE_BLENDING && !defined(SHADOWS_SPLIT_SPHERES) && !defined(SHADOWS_SINGLE_CASCADE)
-        half4 z4 = (float4(vpos.z, vpos.z, vpos.z, vpos.z) - _LightSplitsNear) / (_LightSplitsFar - _LightSplitsNear);
-        half alpha = dot(z4 * cascadeWeights, half4(1, 1, 1, 1));
-
-        UNITY_BRANCH        if (alpha > 1 - UNITY_CASCADE_BLEND_DISTANCE)
-        {
-            // get alpha to 0..1 range over the blend distance
-            alpha = (alpha - (1 - UNITY_CASCADE_BLEND_DISTANCE)) / UNITY_CASCADE_BLEND_DISTANCE;
-
-            // sample next cascade
-            cascadeWeights = fixed4(0, cascadeWeights.xyz);
-            coord = GET_SHADOW_COORDINATES(wpos, cascadeWeights);
-
-            #ifdef UNITY_USE_RECEIVER_PLANE_BIAS
-            biasMultiply = dot(cascadeWeights, unity_ShadowCascadeScales);
-            receiverPlaneDepthBias = UnityGetReceiverPlaneDepthBias(coordCascade0.xyz, biasMultiply);
-            #endif
-
-            half shadowNextCascade = UnitySampleShadowmap_PCF3x3(coord, receiverPlaneDepthBias);
-            shadowNextCascade = lerp(_LightShadowData.r, 1.0f, shadowNextCascade);
-            shadow = lerp(shadow, shadowNextCascade, alpha);
-        }
-        #endif
+        //fixed shadow = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, coord);
+        //fixed shadow = _ShadowMapTexture.SampleCmpLevelZero(sampler_ShadowMapTexture, coord.xy, coord.z);
+        //fixed shadow = tex2Dproj (_ShadowMapTexture,float4(coord.xyz,1)).r
+        fixed shadow = _ShadowMapTexture.Sample(sampler_ShadowMapTexture, coord.xy).r;
 
         return shadow;
     }
@@ -305,7 +238,8 @@
             #pragma vertex vert
             #pragma fragment frag_pcfSoft
             #pragma multi_compile_shadowcollector
-            #pragma target 3.0
+            #pragma target 3.5
+            
 
             inline float3 computeCameraSpacePosFromDepth(v2f i)
             {
