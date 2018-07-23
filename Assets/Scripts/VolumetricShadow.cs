@@ -5,44 +5,41 @@ using UnityEngine.Rendering;
 
 public class VolumetricShadow : MonoBehaviour {
 
-    public Shader zShader;
+    public Shader mipShader;
     public Light mainLight;
-    public RenderTexture target;
+    public RenderTexture shadowMapCopy, minmaxmip;
+    public Texture2D testSource;
 
-    private Material mat;
+    private Material mipMat;
     private Camera cam;
     private CommandBuffer cb;
-    private RenderTextureDescriptor mipDes;
-    private RenderTexture mip;
 
 	void Start () {
-        mat = new Material(zShader);
+        mipMat = new Material(mipShader);
         cam = Camera.main;
         cb = new CommandBuffer();
-        cb.name = "MZ CB";
-        mainLight.AddCommandBuffer(LightEvent.BeforeScreenspaceMask, cb);
+        cb.name = "MZ Sample ShadowMap";
+        mainLight.AddCommandBuffer(LightEvent.AfterShadowMap, cb);
 
-        mipDes = new RenderTextureDescriptor(1024, 768, RenderTextureFormat.RG16, 0);
-        mipDes.useMipMap = true;
-        mipDes.autoGenerateMips = false;
+        RenderTargetIdentifier shadowmap = BuiltinRenderTextureType.CurrentActive;
+        cb.SetShadowSamplingMode(shadowmap, ShadowSamplingMode.RawDepth);
+        cb.Blit(shadowmap, new RenderTargetIdentifier(shadowMapCopy));
 
-        mip = new RenderTexture(mipDes);
-        mip.filterMode = FilterMode.Point;
-        mip.wrapMode = TextureWrapMode.Clamp;
+        cb.SetRenderTarget(minmaxmip, 0);
+        mipMat.SetInt("_mipLevel", 1);
+        cb.Blit(testSource, BuiltinRenderTextureType.CurrentActive);
 
-        cb.Blit(null, target, mat);
-    }
+        cb.SetRenderTarget(minmaxmip, 1);
+        cb.Blit(testSource, BuiltinRenderTextureType.CurrentActive, mipMat);
+    }    
 
-    private void GenerateMinMaxMip(CommandBuffer cb, RenderTexture mip)
-    {
-        for (int i = 0; i < 10; i++)
-        {
-
-        }
-    }
-    private void OnPostRender()
-    {
-        
-    }
-   
+    //private void OnRenderImage(RenderTexture src, RenderTexture dst)
+    //{
+    //    for (int i = 0; i < 10; i++)
+    //    {
+    //        mipMat.SetInt("_mipLevel", i + 1);
+    //        Graphics.SetRenderTarget(minmaxmip, i + 1);
+    //        Graphics.Blit(shadowMapCopy, minmaxmip, mipMat);
+    //    }
+    //}
 }
