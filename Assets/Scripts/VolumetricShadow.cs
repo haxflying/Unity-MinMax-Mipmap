@@ -12,34 +12,26 @@ public class VolumetricShadow : MonoBehaviour {
 
     private Material mipMat;
     private Camera cam;
-    private CommandBuffer cb;
+    private CommandBuffer cb_sm, cb_mip;
 
 	void Start () {
         mipMat = new Material(mipShader);
         cam = Camera.main;
-        cb = new CommandBuffer();
-        cb.name = "MZ Sample ShadowMap";
-        mainLight.AddCommandBuffer(LightEvent.AfterShadowMap, cb);
+
+        cb_sm = new CommandBuffer();
+        cb_sm.name = "MZ Sample ShadowMap";
+        mainLight.AddCommandBuffer(LightEvent.AfterShadowMap, cb_sm);
 
         RenderTargetIdentifier shadowmap = BuiltinRenderTextureType.CurrentActive;
-        cb.SetShadowSamplingMode(shadowmap, ShadowSamplingMode.RawDepth);
-        cb.Blit(shadowmap, new RenderTargetIdentifier(shadowMapCopy));
+        cb_sm.SetShadowSamplingMode(shadowmap, ShadowSamplingMode.RawDepth);
+        cb_sm.Blit(shadowmap, new RenderTargetIdentifier(shadowMapCopy));
 
-        cb.SetRenderTarget(minmaxmip, 0);
-        mipMat.SetInt("_mipLevel", 1);
-        cb.Blit(testSource, BuiltinRenderTextureType.CurrentActive);
-
-        cb.SetRenderTarget(minmaxmip, 1);
-        cb.Blit(testSource, BuiltinRenderTextureType.CurrentActive, mipMat);
+        cb_mip = new CommandBuffer();
+        cb_mip.name = "MZ Write Mip";
+        cam.AddCommandBuffer(CameraEvent.BeforeImageEffects, cb_mip);
+        cb_mip.Blit(testSource, minmaxmip);
+        cb_mip.SetRenderTarget(minmaxmip, 10);
+        cb_mip.Blit(testSource, BuiltinRenderTextureType.CurrentActive, mipMat, 0);
     }    
 
-    //private void OnRenderImage(RenderTexture src, RenderTexture dst)
-    //{
-    //    for (int i = 0; i < 10; i++)
-    //    {
-    //        mipMat.SetInt("_mipLevel", i + 1);
-    //        Graphics.SetRenderTarget(minmaxmip, i + 1);
-    //        Graphics.Blit(shadowMapCopy, minmaxmip, mipMat);
-    //    }
-    //}
 }

@@ -1,4 +1,4 @@
-﻿Shader "Hidden/mip"
+﻿Shader "Hidden/sampleShadowmap"
 {
 	Properties
 	{
@@ -38,20 +38,13 @@
 			}
 			
 			sampler2D _MainTex;
-			int _miplvl;
-
-			float3 hash3(float2 p)
-			{
-				float3 q = float3(dot(p, float2(127.1, 311.7)),
-								dot(p, float2(269.5, 183.3)),
-								dot(p, float2(419.2, 371.9)));
-				return frac(sin(q)*43758.5453);
-			}
 
 			fixed4 frag (v2f i) : SV_Target
 			{
-				
-				return fixed4(hash3(_miplvl),1);
+				fixed4 col = tex2D(_MainTex, i.uv);
+				// just invert the colors
+				col.rgb = 1 - col.rgb;
+				return col;
 			}
 			ENDCG
 		}
