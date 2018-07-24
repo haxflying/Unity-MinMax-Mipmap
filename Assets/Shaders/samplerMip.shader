@@ -3,6 +3,7 @@
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
+		_miplvl("miplvl", Range(0, 10)) = 0
 	}
 	SubShader
 	{
