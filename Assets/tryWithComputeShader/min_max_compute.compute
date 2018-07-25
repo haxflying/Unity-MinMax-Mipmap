@@ -1,0 +1,44 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+RWStructuredBuffer<float2> minmaxTree;
+Texture2D<float> shadowTex;
+SamplerState samplershadowTex
+{
+    Filter = MIN_MAG_MIP_POINT;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+
+int GetSum(int index)
+{
+	//等比数列求和
+    return pow(2, index + 1) - 1;
+}
+
+[numthreads(8,1,1)]
+
+void CSMain
+(
+uint3 id : SV_DispatchThreadID
+)
+{
+//just a test now
+    int index = id.x;
+    int u = (int) (index / 1024); //row
+    int v = index - 1024 * u; //col
+    float2 uv = float2((float) u, (float) v) / 1024.0;
+    
+    float sdepth = shadowTex.SampleLevel(samplershadowTex, uv, 0);
+
+    uint num, stride;
+    minmaxTree.GetDimensions(num, stride);
+
+    if (index < num)
+    {
+        minmaxTree[index].x = sdepth;
+        minmaxTree[index].y = sdepth;
+    }
+    minmaxTree[1] = float2(0.5, 0.5);
+
+}

@@ -460,16 +460,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1683168784}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f06c4a2c572b89d42ba1fa9445ea08a4, type: 3}
+  m_Script: {fileID: 11500000, guid: 15f32e37c7d3e9241869f7d2f662437c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mipShader: {fileID: 4800000, guid: 5e3901891bf832e43b3e86970bc6f89b, type: 3}
-  samplerShader: {fileID: 4800000, guid: 6ad30f04cad323442a3b57c4e2d2e9b9, type: 3}
+  mmShader: {fileID: 4800000, guid: 0cd79195f8b5abf46b50bf66559c9afc, type: 3}
   mainLight: {fileID: 1970095172}
+  cs_light: {fileID: 7200000, guid: 2d7be52c21e31304f8579c549119a2dd, type: 3}
   shadowMapCopy: {fileID: 8400000, guid: 8f1e4064fce27214dadf275ea6a6c394, type: 2}
-  target: {fileID: 0}
-  sourceTex: {fileID: 2800000, guid: d6e7a38183c1bd84f97e9b2ba5ff8b86, type: 3}
-  miplevel: 0
 --- !u!1 &1970095171
 GameObject:
   m_ObjectHideFlags: 0

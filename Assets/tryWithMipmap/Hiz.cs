@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class VolumetricShadow : MonoBehaviour {
+public class Hiz : MonoBehaviour {
 
     public Shader mipShader, samplerShader;
     public Light mainLight;
