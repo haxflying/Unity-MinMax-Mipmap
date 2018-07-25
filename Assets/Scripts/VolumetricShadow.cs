@@ -7,7 +7,7 @@ public class VolumetricShadow : MonoBehaviour {
 
     public Shader mipShader, samplerShader;
     public Light mainLight;
-    public RenderTexture shadowMapCopy, minmaxmip;
+    public RenderTexture shadowMapCopy, target;//for test
     public Texture2D sourceTex;
 
     [Range(0, 10)]
@@ -32,10 +32,11 @@ public class VolumetricShadow : MonoBehaviour {
         RenderTargetIdentifier shadowmap = BuiltinRenderTextureType.CurrentActive;
         cb_sm.SetShadowSamplingMode(shadowmap, ShadowSamplingMode.RawDepth);
         cb_sm.Blit(shadowmap, new RenderTargetIdentifier(shadowMapCopy));
+        cb_sm.Blit(shadowMapCopy, target, samplerMat);
 
-        cb_mip = new CommandBuffer();
-        cb_mip.name = "MZ Write Mip";
-        cam.AddCommandBuffer(CameraEvent.BeforeImageEffects, cb_mip);
+        //cb_mip = new CommandBuffer();
+        //cb_mip.name = "MZ Write Mip";
+        //cam.AddCommandBuffer(CameraEvent.BeforeImageEffects, cb_mip);
 
         //hard coded for temp version       
         //int[] temp_mip = new int[10];
@@ -87,6 +88,7 @@ public class VolumetricShadow : MonoBehaviour {
 
     private void OnRenderImage(RenderTexture src, RenderTexture dst)
     {
+        //generate min max mipmap
         RenderTexture buffer = new RenderTexture(shadowMapCopy.width, shadowMapCopy.height, 0, RenderTextureFormat.RGHalf);
         Graphics.Blit(shadowMapCopy, buffer, mipMat, 0); //from r to rg min max
         for (int i = 1; i < 10; i++)
