@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using System;
 
 public class MinMaxOneD : MonoBehaviour {
 
@@ -30,15 +31,19 @@ public class MinMaxOneD : MonoBehaviour {
         
 
         int kernel = InitCS();
-        cb_sm.DispatchCompute(cs_light, kernel, 128, 1, 1);
+        cb_sm.DispatchCompute(cs_light, kernel, 1024, 1, 1);
 
-        cb_sm.Blit(null, target, mmMat);
+        //cb_sm.Blit(null, target, mmMat);
     } 
     
     private int InitCS()
     {
         int count = 1024 * 2047;
-        mipTreeBuffer = new ComputeBuffer(count, 2 * sizeof(float), ComputeBufferType.Default);      
+        mipTreeBuffer = new ComputeBuffer(count, 2 * sizeof(float), ComputeBufferType.Default);
+
+        Vector2[] data = new Vector2[1024 * 2047];
+        data.Initialize();
+        mipTreeBuffer.SetData(data);
 
         int kernel = cs_light.FindKernel("CSMain");
         if(kernel == -1)
@@ -46,12 +51,14 @@ public class MinMaxOneD : MonoBehaviour {
 
         cs_light.SetBuffer(kernel, "minmaxTree", mipTreeBuffer);
         cs_light.SetTexture(kernel, "shadowTex", shadowMapCopy);
+        cs_light.SetInt("bufferLength", count / 1024);
+        cs_light.SetInt("deep", 10);
         mmMat.SetBuffer("cs_res", mipTreeBuffer);
         return kernel;
     }
 
-    //private void OnRenderImage(RenderTexture src, RenderTexture dst)
-    //{
-    //    Graphics.Blit(src, dst, mmMat);
-    //}
+    private void OnRenderImage(RenderTexture src, RenderTexture dst)
+    {
+        Graphics.Blit(src, dst, mmMat);
+    }
 }

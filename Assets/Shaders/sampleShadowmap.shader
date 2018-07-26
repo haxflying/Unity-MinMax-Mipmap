@@ -1,4 +1,4 @@
-﻿Shader "Hidden/DrawCSResult"
+﻿Shader "Hidden/sampleShadowmap"
 {
 	Properties
 	{
@@ -14,7 +14,6 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
-			#pragma target 4.5
 			
 			#include "UnityCG.cginc"
 
@@ -30,8 +29,6 @@
 				float4 vertex : SV_POSITION;
 			};
 
-			StructuredBuffer<float2> cs_res;
-
 			v2f vert (appdata v)
 			{
 				v2f o;
@@ -44,9 +41,9 @@
 
 			fixed4 frag (v2f i) : SV_Target
 			{
-				float2 uv = i.uv * 1024;
-				int index = (int)uv.x * 1024 + (int)uv.y;
-				float col = cs_res[index].x;
+				fixed4 col = tex2D(_MainTex, i.uv);
+				// just invert the colors
+				col.rgb = 1 - col.rgb;
 				return col;
 			}
 			ENDCG

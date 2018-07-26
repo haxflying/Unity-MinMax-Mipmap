@@ -9,26 +9,29 @@ SamplerState samplershadowTex
     AddressU = Wrap;
     AddressV = Wrap;
 };
-
+int bufferLength;
+int deep;
 int GetSum(int index)
 {
 	//等比数列求和
-    return pow(2, index + 1) - 1;
+    int sum = pow(2, deep - index + 1) - 1;
+    //数组Index从0开始，所以-1
+    return (bufferLength - sum - 1) * 1024;
 }
 
-[numthreads(8,1,1)]
+[numthreads(1024,1,1)]
 
 void CSMain
 (
-uint3 id : SV_DispatchThreadID
+uint3 gId : SV_GroupID,
+uint3 tId : SV_GroupThreadID
 )
 {
 //just a test now
-    int index = id.x;
-    int u = (int) (index / 1024); //row
-    int v = index - 1024 * u; //col
+    int u = gId.x;
+    int v = tId.x;
+    int index = u * 1024 + v;
     float2 uv = float2((float) u, (float) v) / 1024.0;
-    
     float sdepth = shadowTex.SampleLevel(samplershadowTex, uv, 0);
 
     uint num, stride;
@@ -36,9 +39,14 @@ uint3 id : SV_DispatchThreadID
 
     if (index < num)
     {
-        minmaxTree[index].x = sdepth;
-        minmaxTree[index].y = sdepth;
-    }
-    minmaxTree[1] = float2(0.5, 0.5);
+        minmaxTree[index] = float2(sdepth, sdepth);
 
+        for (int i = 0; i < deep; i++)
+        {           
+            int s_offset = GetSum(i);
+            int t_offset = GetSum(i + 1);
+            minmaxTree[t_offset].x = max(minmaxTree[s_offset].x, minmaxTree[s_offset + 1].x);
+            minmaxTree[t_offset].y = min(minmaxTree[s_offset].y, minmaxTree[s_offset + 1].y);
+        }      
+    }
 }
