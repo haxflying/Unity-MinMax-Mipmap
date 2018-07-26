@@ -32,7 +32,7 @@ public class MinMaxOneD : MonoBehaviour {
 
         int kernel = InitCS();
         cb_sm.DispatchCompute(cs_light, kernel, 1024, 1, 1);
-
+        
         //cb_sm.Blit(null, target, mmMat);
     } 
     

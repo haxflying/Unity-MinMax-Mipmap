@@ -20,12 +20,8 @@ int GetSum(int index)
 }
 
 [numthreads(1024,1,1)]
-
 void CSMain
-(
-uint3 gId : SV_GroupID,
-uint3 tId : SV_GroupThreadID
-)
+(uint3 gId : SV_GroupID, uint3 tId : SV_GroupThreadID)
 {
 //just a test now
     int u = gId.x;
@@ -39,14 +35,7 @@ uint3 tId : SV_GroupThreadID
 
     if (index < num)
     {
-        minmaxTree[index] = float2(sdepth, sdepth);
-
-        for (int i = 0; i < deep; i++)
-        {           
-            int s_offset = GetSum(i);
-            int t_offset = GetSum(i + 1);
-            minmaxTree[t_offset].x = max(minmaxTree[s_offset].x, minmaxTree[s_offset + 1].x);
-            minmaxTree[t_offset].y = min(minmaxTree[s_offset].y, minmaxTree[s_offset + 1].y);
-        }      
+        minmaxTree[index] = float2(sdepth, sdepth);                                   
     }
 }
+
